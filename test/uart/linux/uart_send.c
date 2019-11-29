@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include "errorMsg.h"
 
 #define BUFFSIZE 32
@@ -44,12 +45,17 @@ int main(int argc, char *argv[])
 
 	char write_buffer[BUFFSIZE];
 	int bytes  =  0 ;
-	printf("\n Enter message to be transmitted:");
-	while ((fgets(write_buffer, BUFFSIZE, stdin)) != NULL) {
-	if((bytes = write(fd,write_buffer,sizeof(write_buffer))) < 0 ) 
+	printf("\n Enter message to be transmitted:(Type quit to quit)");
+	fgets(write_buffer, BUFFSIZE, stdin);
+	while (strcmp(write_buffer, "quit\n") != 0 ) {
+	if((bytes = write(fd,write_buffer,strlen(write_buffer))) < 0 ) 
 		DieWithError("\n Sending Failed");
-		}
-
+	printf("\n Sending \033[0;32m %d \033[0m bytes. \n", bytes);
+	//printf("\n Enter the next message to be transmitted(type quit to exit): ");
+	memset(write_buffer, 0,  BUFFSIZE);
+	fgets(write_buffer, BUFFSIZE, stdin);	
+	}
+	printf("\n \033[1;31m Exiting.. \033[0m \n");
 	close(fd);
 
 }
