@@ -4,19 +4,66 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include "errorMsg.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <pthread.h>
 
 #define MAXPENDING 5
 #define RECVBUFF 32
 #define BUFFSIZE 32
 
+#define PORT_UART "/dev/ttyS0"
+#define PORT_ETHERNET "1234"
+
 void DieWithError(char *errorMsg);
 void HandleTCPClient(int clientSock);
+int *ethernet(void *arg);
+int *uart(void *arg);
 
-int *ethernet(int _argc, char *_argv[])
+NTHREADS = 2;
+
+int main()
+{
+
+ /*      struct thread_args {
+       int argc1;
+       const char *argv1;
+     };
+*/  
+  pthread_t threads[NTHREADS];
+ /* struct thread_args *args = malloc (sizeof (struct thread_args));
+  args->argc1   = argc;
+  args->argv1[] = argv[];
+*/
+  int rc;
+
+  /* spawn the threads */
+/*	if(argc!= 3)
+	{
+	fprintf(stderr,"Usage:%s </dev/ttyXXX>  <Server Port> \n",argv[0]);
+	exit(0);	
+	}
+*/
+    
+      printf("spawning thread 0\n");
+      rc = pthread_create(&threads[0], NULL, &uart,NULL);
+      printf("spawning thread 1\n");
+      rc = pthread_create(&threads[1], NULL, &ethernet,NULL);
+
+
+  /* wait for threads to finish */
+    rc = pthread_join(threads[0], NULL);
+    rc = pthread_join(threads[1], NULL);
+
+
+  return 0;
+}
+
+
+
+
+int *ethernet(void *arg)
 {
 	int serverSock;
 	int clientSock;
@@ -30,7 +77,7 @@ int *ethernet(int _argc, char *_argv[])
 		exit(1);
 	}
 */
-	echoServPort = atoi(_argv[2]);
+	echoServPort = atoi(PORT_ETHERNET);
 
 	/* Creating a socket */
 	if((serverSock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
@@ -66,8 +113,6 @@ int *ethernet(int _argc, char *_argv[])
 		printf("\n \033[0;32m [SERVER] \033[0m Handling client: %s \n", inet_ntoa(echoClientAddr.sin_addr));
 		HandleTCPClient(clientSock);
 
-/*free the struct used for arguments*/
-		free (args);
   		pthread_exit (NULL);
 
 	}
@@ -112,23 +157,22 @@ void DieWithError(char *errorMsg1)
 
 
 
-int *uart(int _argc, char *_argv[])
+int *uart(void *arg)
 {
 
 
 	int fd;
 	struct termios SerialSettings;
-	_argc = argc1;
-	_argv[]= argv1[];
+
 /*      if (_argc!=3) {
 		
 		fprintf(stderr, "Usage:%s </dev/ttyXXX> \n", argv1[0]);
 		exit(0);
 	}
 */
-	if((fd=open(_argv[1], O_RDWR | O_NOCTTY)) < 0)
+	if((fd=open(PORT_UART, O_RDWR | O_NOCTTY)) < 0)
 		DieWithError("\n Cannot open port!");
-	printf("\n %s opened succesfully!", _argv[1]);
+	printf("\n %s opened succesfully!", PORT_UART);
 
 	tcgetattr(fd, &SerialSettings);	
 
@@ -151,10 +195,10 @@ int *uart(int _argc, char *_argv[])
 
 
 
-	char write_buffer[BUFFSIZE];
+	char write_buffer[BUFFSIZE] = "Hello world!";
 	int bytes  =  0 ;
-	printf("\n Enter message to be transmitted:");
-	while ((fgets(write_buffer, BUFFSIZE, stdin)) != NULL) {
+	//printf("\n Enter message to be transmitted:");
+	while (1) {
 	if((bytes = write(fd,write_buffer,sizeof(write_buffer))) < 0 ) 
 		DieWithError("\n Sending Failed");
 		}
@@ -163,41 +207,4 @@ int *uart(int _argc, char *_argv[])
 
 }
 
-NTHREADS = 2;
-
-int main(int argc, char *argv[])
-{
-
-       struct thread_args {
-       int argc1;
-       const char *argv1;
-     };
-  pthread_t threads[NTHREADS];
-  struct thread_args *args = malloc (sizeof (struct thread_args));
-  args->argc1   = argc;
-  args->argv1[] = argv[];
-
-  int rc;
-
-  /* spawn the threads */
-	if(argc!= 3)
-	{
-	fprintf(stderr,"Usage:%s </dev/ttyXXX>  <Server Port> \n",argv[0]);
-	exit(0);	
-	}
-
-    
-      printf("spawning thread 0\n",);
-      rc = pthread_create(&threads[0], NULL, uart,args);
-      printf("spawning thread 1\n",);
-      rc = pthread_create(&threads[1], NULL, ethernet,args);
-
-
-  /* wait for threads to finish */
-    rc = pthread_join(threads[0], NULL);
-    rc = pthread_join(threads[1], NULL);
-
-
-  return 1;
-}
 
