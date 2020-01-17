@@ -1,0 +1,21 @@
+source [find ../tcl/target/imx6.cfg]
+source [find ../tcl/interface/jlink.cfg]
+
+proc enable_fast_clock {} {
+    # enables fast on-board clock source
+    # configures the chip to use it
+}
+
+# initialize only board specifics - reset, clock, adapter frequency
+proc init_board {} {
+    reset_config trst_and_srst trst_pulls_srst
+
+    $_TARGETNAME configure -event reset-start {
+        adapter_khz 100
+    }
+
+    $_TARGETNAME configure -event reset-init {
+        enable_fast_clock
+        adapter_khz 1000
+    }
+}
